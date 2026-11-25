@@ -1,0 +1,13 @@
+{{- if gt (int .Values.replicaCount) 1 }}
+# Chaos fix 2: voluntary disruptions keep >=1 pod up
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: portfolio
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

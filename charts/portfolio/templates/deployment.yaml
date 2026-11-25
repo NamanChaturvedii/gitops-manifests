@@ -20,6 +20,16 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         env: {{ .Values.env }}
     spec:
+      # Chaos fix 1: never put two replicas on the same node
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: portfolio
+              app.kubernetes.io/instance: {{ .Release.Name }}
+      terminationGracePeriodSeconds: 30
       containers:
         - name: portfolio
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -27,12 +37,17 @@ spec:
           ports:
             - name: http
               containerPort: 80
+          # Chaos fix 3: keep serving while the ALB deregisters this pod
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "15"]
           readinessProbe:
             httpGet:
               path: /health
               port: http
             initialDelaySeconds: 3
-            periodSeconds: 10
+            periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health

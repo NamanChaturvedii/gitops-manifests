@@ -11,6 +11,20 @@ spec:
     targetRevision: "3.10.0"
     helm:
       releaseName: kyverno
+      valuesObject:
+        admissionController:
+          replicas: 2   # chaos fix: one node loss must not take the webhook down
+          podDisruptionBudget:
+            enabled: true
+            minAvailable: 1
+          topologySpreadConstraints:
+            - maxSkew: 1
+              topologyKey: kubernetes.io/hostname
+              whenUnsatisfiable: DoNotSchedule
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: admission-controller
+                  app.kubernetes.io/instance: kyverno
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno

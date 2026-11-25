@@ -9,6 +9,8 @@ metadata:
   annotations:
     alb.ingress.kubernetes.io/target-type: ip
     alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=10
+    alb.ingress.kubernetes.io/target-group-attributes: deregistration_delay.timeout_seconds=10
 spec:
   ingressClassName: alb
   rules:
