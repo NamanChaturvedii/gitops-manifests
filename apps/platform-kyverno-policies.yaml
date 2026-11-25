@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-kyverno-policies
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/NamanChaturvedii/gitops-manifests.git
+    targetRevision: main
+    path: platform/kyverno-policies
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true   # wait for Kyverno CRDs on a fresh cluster

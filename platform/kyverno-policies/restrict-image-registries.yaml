@@ -1,0 +1,22 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-image-registries
+  annotations:
+    policies.kyverno.io/description: Only images from our ECR are allowed; they passed the Jenkins security gates (Gitleaks, OWASP, SonarQube, Trivy).
+spec:
+  background: true
+  rules:
+    - name: only-our-ecr
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: ["portfolio-*"]
+      validate:
+        failureAction: Enforce
+        message: "Images must come from 287629436195.dkr.ecr.ap-south-1.amazonaws.com (scanned by the Jenkins pipeline)."
+        pattern:
+          spec:
+            containers:
+              - image: "287629436195.dkr.ecr.ap-south-1.amazonaws.com/*"
