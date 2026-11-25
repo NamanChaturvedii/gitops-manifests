@@ -1,4 +1,4 @@
 env: dev
 replicaCount: 1
 image:
-  tag: "17"
+  tag: "15"
