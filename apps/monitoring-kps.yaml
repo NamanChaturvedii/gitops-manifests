@@ -1,0 +1,85 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-kps
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "93.11.0"
+    helm:
+      releaseName: kps
+      valuesObject:
+        fullnameOverride: kps
+
+        # EKS Auto Mode manages control plane, CoreDNS, kube-proxy -> nothing to scrape
+        kubeControllerManager: { enabled: false }
+        kubeScheduler: { enabled: false }
+        kubeEtcd: { enabled: false }
+        kubeProxy: { enabled: false }
+        coreDns: { enabled: false }
+
+        prometheus:
+          prometheusSpec:
+            retention: 2d
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+
+        grafana:
+          adminPassword: prom-operator   # lab only; reached via port-forward
+          additionalDataSources:
+            - name: Loki
+              type: loki
+              access: proxy
+              url: http://loki.monitoring.svc:3100
+
+        additionalPrometheusRulesMap:
+          portfolio:
+            groups:
+              - name: portfolio.rules
+                rules:
+                  - alert: PortfolioReplicasUnavailable
+                    expr: kube_deployment_status_replicas_unavailable{namespace=~"portfolio-.*"} > 0
+                    for: 1m
+                    labels:
+                      severity: critical
+                    annotations:
+                      summary: Portfolio has unavailable replicas
+                      description: A portfolio deployment has had unavailable pods for more than 1 minute.
+
+        alertmanager:
+          alertmanagerSpec:
+            secrets: [alertmanager-slack]
+          config:
+            global:
+              resolve_timeout: 5m
+            route:
+              receiver: "null"
+              group_by: [alertname, namespace]
+              group_wait: 30s
+              group_interval: 5m
+              repeat_interval: 4h
+              routes:
+                - receiver: slack
+                  matchers:
+                    - severity="critical"
+            receivers:
+              - name: "null"
+              - name: slack
+                slack_configs:
+                  - api_url_file: /etc/alertmanager/secrets/alertmanager-slack/url
+                    channel: "#jenkins-alert"
+                    send_resolved: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
