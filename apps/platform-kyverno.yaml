@@ -17,14 +17,13 @@ spec:
           podDisruptionBudget:
             enabled: true
             minAvailable: 1
-          topologySpreadConstraints:
-            - maxSkew: 1
-              topologyKey: kubernetes.io/hostname
-              whenUnsatisfiable: DoNotSchedule
-              labelSelector:
-                matchLabels:
-                  app.kubernetes.io/component: admission-controller
-                  app.kubernetes.io/instance: kyverno
+          podAntiAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: admission-controller
+                    app.kubernetes.io/instance: kyverno
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno

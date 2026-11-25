@@ -20,15 +20,17 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         env: {{ .Values.env }}
     spec:
-      # Chaos fix 1: never put two replicas on the same node
-      topologySpreadConstraints:
-        - maxSkew: 1
-          topologyKey: kubernetes.io/hostname
-          whenUnsatisfiable: DoNotSchedule
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: portfolio
-              app.kubernetes.io/instance: {{ .Release.Name }}
+      # Chaos fix 1: never put two replicas on the same node.
+      # (topologySpread only balances across EXISTING nodes; required anti-affinity
+      #  makes the 2nd pod Pending so Auto Mode launches a new node.)
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: portfolio
+                  app.kubernetes.io/instance: {{ .Release.Name }}
       terminationGracePeriodSeconds: 30
       containers:
         - name: portfolio
