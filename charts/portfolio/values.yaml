@@ -1,0 +1,15 @@
+# Defaults. Each environment overrides these in envs/<env>/values.yaml
+env: dev
+replicaCount: 1
+
+image:
+  repository: 287629436195.dkr.ecr.ap-south-1.amazonaws.com/portfolio
+  tag: "CHANGE_ME"   # set per environment; Jenkins updates dev automatically
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
