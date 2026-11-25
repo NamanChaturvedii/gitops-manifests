@@ -13,3 +13,6 @@ resources:
   limits:
     cpu: 200m
     memory: 128Mi
+
+ingress:
+  enabled: true   # public ALB per environment
