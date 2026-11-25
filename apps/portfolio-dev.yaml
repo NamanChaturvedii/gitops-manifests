@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portfolio-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/NamanChaturvedii/gitops-manifests.git
+    targetRevision: main
+    path: charts/portfolio
+    helm:
+      releaseName: portfolio
+      valueFiles:
+        - ../../envs/dev/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: portfolio-dev
+  syncPolicy:
+    automated:          # dev: every Git change deploys automatically
+      prune: true       # delete resources removed from Git
+      selfHeal: true    # undo manual kubectl changes
+    syncOptions:
+      - CreateNamespace=true
